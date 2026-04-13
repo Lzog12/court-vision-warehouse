@@ -1,0 +1,37 @@
+# yamlchecker.com
+team: Knicks
+year: 1906
+is_current: true
+good_team: yes
+season: on
+# Multi line string
+background: >
+  This team is in new York
+  they reacher the ECF in 2025
+
+# Multi line but converted to new lines
+about: |
+  New York
+  Knicks
+  NYK
+
+# List
+players:
+  - Jalen Brunson
+  - Josh Hart
+  - Mikal Bridges
+
+players_new: [Jalen Brunson, Josh Hart]
+
+
+# Object
+staff:
+  coach: Mike Brown
+  assistant: Jalen's Dad
+
+
+# Complex types
+players_complex:
+  - name: Karl Anthony-Towns
+    age: 28
+    is_good: no

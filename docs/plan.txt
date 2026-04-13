@@ -1,0 +1,36 @@
+DELIVERABLE/BUSINESS PROCESS:
+===============
+- NBA shots context for media analysis
+
+
+WAREHOUSE:
+===============
+fct_game_played
+    KEYS:
+        - game_key
+        - other key
+    METRICS:
+        - home_team_score
+        - away_team_score
+
+dim_games(game_key)
+dim_teams(team_key)
+
+
+STAGING:
+===============
+- stg_sheets__games
+- stg_nbaapi__games
+
+
+STAGING:
+===============
+player_data
+- players
+
+team_data
+- games
+- teams
+
+
+
