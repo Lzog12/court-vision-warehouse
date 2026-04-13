@@ -15,16 +15,23 @@ from ..config.settings import build_connection_string
 from ..db.engine import SqlServerEngine
 
 # INSERT queries
-from ..db.insert_raw_query import create_batch_id, insert_shot_chart_detail
+from ..db.insert_raw_query import create_batch_id, insert_shot_chart_detail, insert_player_game_log, insert_play_by_play, insert_box_score_player_track
 
 # All runtime parameters
-from ..config.runtime_parameters import day, regular_season, playoff_season, current_season
+from ..config.runtime_parameters import get_date, regular_season, playoff_season, current_season
 
 # Cursor object type
 from pyodbc import Cursor
 
+"""Run database engine"""
+# Retrieve connection string containing env variables
+connection_string = build_connection_string()
+sql_engine = SqlServerEngine(conn_string=connection_string)
+sql_engine.connect()
 # Run player_index: from parent 'etl' directory.
 # Command: python3 -m src.etl.pipelines.run_daily
+
+day = get_date()
 
 # Retrieve unique game ids from today's games (LeagueGameLog)
 uq_game_ids = game_ids(
@@ -33,10 +40,15 @@ uq_game_ids = game_ids(
     season='2025', 
     season_type=regular_season
 )
-# Returns dictionary 
+# Returns dictionary of player information (player_id, team_id, game_id)
 player_team_ids = player_and_team_id(
     game_ids=uq_game_ids
 )
+
+# Create batch id prior to endpoint calls, as it will need to be added to each record
+with sql_engine.connect() as conn:
+    cursor: Cursor = conn.cursor()
+    batch_id = cursor.execute(create_batch_id).fetchone()[0]
 
 """ENDPOINT CALLS"""
 
@@ -76,6 +88,7 @@ def process_players() -> tuple[list[PlayerShots], list[PlayerGame]]:
                 day,
                 current_season,
                 player_shots,
+                batch_id
             )
         )
 
@@ -87,6 +100,7 @@ def process_players() -> tuple[list[PlayerShots], list[PlayerGame]]:
                 day,
                 current_season,
                 player_game,
+                batch_id
             )
         )
 
@@ -115,6 +129,7 @@ def process_games() -> tuple[list[PlayByPlay], list[BoxScore]]:
             day,
             current_season,
             pbp,
+            batch_id
         )
     )
     
@@ -125,26 +140,22 @@ def process_games() -> tuple[list[PlayByPlay], list[BoxScore]]:
             day,
             current_season,
             bxs,
+            batch_id
         )
     )
 
     return all_pbp_games, all_bxs_games
 
 p_shots, p_game = process_players()
-pbp_games, bxs_games = process_games()
+pbp_game, bxs_track = process_games()
 
 
 
-
-"""Run database engine"""
-# Retrieve connection string containing env variables
-connection_string = build_connection_string()
-test_engine = SqlServerEngine(conn_string=connection_string)
 
 
 
 # Activate connection
-with test_engine.connect() as conn:
+with sql_engine.connect() as conn:
     # Turn autocommit off to run a transaction style
     conn.autocommit = False
     # Create cursor
@@ -155,24 +166,10 @@ with test_engine.connect() as conn:
     # Can i store all the executions in variables then start a transaction, then execute all?
 
     try:
-        # Current batch_id
-        current_batch_id = cursor.execute(create_batch_id).fetchone[0]
-
-
-        cursor.executemany(
-            """
-            INSERT INTO raw.shot_chart_detail (player_id, game_id, game_date, season, json_payload, payload_hash, batch_id)
-            VALUES (@player_id, @game_id, @game_date, @season, @json_payload, HASHBYTES('SHA2_256', CONVERT(NVARCHAR(MAX), @json_payload)), @batch_id)
-            """, p_shots
-        )
-        
-        
-        cursor.executemany(
-            """
-            EXEC InsertPeople @name = ?, @age = ?
-            """, [('Mike', 31), ('Anna', 32), ('Florence', 27)])
-
-
+        cursor.executemany(insert_shot_chart_detail, p_shots)
+        cursor.executemany(insert_player_game_log, p_game)
+        cursor.executemany(insert_play_by_play, pbp_game)
+        cursor.executemany(insert_box_score_player_track, bxs_track)
     except Exception as e:
         print('Error')
         conn.rollback()
@@ -180,7 +177,6 @@ with test_engine.connect() as conn:
         print()
         conn.commit()
     finally:
-
 
 
         # cursor.execute('SELECT * FROM dbo.court WHERE age >= 30 AND age <= 40 ORDER BY age DESC')

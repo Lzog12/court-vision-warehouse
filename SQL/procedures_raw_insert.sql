@@ -11,10 +11,27 @@ CREATE PROCEDURE InsertShots
     @batch_id UNIQUEIDENTIFIER
 AS
 BEGIN
-    INSERT INTO raw.shot_chart_detail(player_id, game_id, game_date, season, json_payload, payload_hash, batch_id)
-        VALUES(@player_id, @game_id, @game_date, @season, @json_payload, HASHBYTES('SHA2_256', CONVERT(NVARCHAR(MAX), @json_payload)), @batch_id);
+    INSERT INTO raw.shot_chart_detail(
+       player_id,
+       game_id,
+       game_date,
+       season,
+       json_payload,
+       payload_hash,
+       batch_id 
+    )
+    VALUES(
+        @player_id,
+        @game_id,
+        @game_date,
+        @season,
+        @json_payload,
+        HASHBYTES('SHA2_256', @json_payload),
+        @batch_id
+    )
 END;
 GO
+
 
 -- raw.player_game_log
 CREATE PROCEDURE InsertPlayerGame
@@ -26,8 +43,24 @@ CREATE PROCEDURE InsertPlayerGame
     @batch_id UNIQUEIDENTIFIER
 AS
 BEGIN
-    INSERT INTO raw.player_game_log(player_id, game_id, game_date, season, json_payload, payload_hash, batch_id)
-        VALUES(@player_id, @game_id, @game_date, @season, @json_payload, HASHBYTES('SHA2_256', CONVERT(NVARCHAR(MAX), @json_payload)), @batch_id)
+    INSERT INTO raw.player_game_log(
+        player_id,
+        game_id,
+        game_date,
+        season,
+        json_payload,
+        payload_hash,
+        batch_id
+    )
+    VALUES(
+        @player_id,
+        @game_id,
+        @game_date,
+        @season,
+        @json_payload,
+        HASHBYTES('SHA2_256', @json_payload),
+        @batch_id
+    )
 END;
 GO
 
@@ -40,8 +73,23 @@ CREATE PROCEDURE InsertPlayByPlay
     @batch_id UNIQUEIDENTIFIER
 AS
 BEGIN
-    INSERT INTO raw.player_game_log(player_id, game_id, game_date, season, json_payload, payload_hash, batch_id)
-        VALUES(@game_id, @game_date, @season, @json_payload, HASHBYTES('SHA2_256', CONVERT(NVARCHAR(MAX), @json_payload)), @batch_id)
+    INSERT INTO raw.player_game_log(
+        player_id,
+        game_id,
+        game_date,
+        season,
+        json_payload,
+        payload_hash,
+        batch_id
+    )
+    VALUES(
+        @game_id,
+        @game_date,
+        @season,
+        @json_payload,
+        HASHBYTES('SHA2_256', @json_payload),
+        @batch_id
+    )
 END;
 GO
 
@@ -55,11 +103,23 @@ CREATE PROCEDURE InsertBoxScorePlayerTrack
     @batch_id UNIQUEIDENTIFIER
 AS
 BEGIN
-    INSERT INTO raw.player_game_log(player_id, game_id, game_date, season, json_payload, payload_hash, batch_id)
-        VALUES(@game_id, @game_date, @season, @json_payload, HASHBYTES('SHA2_256', CONVERT(NVARCHAR(MAX), @json_payload)), @batch_id)
+    INSERT INTO raw.player_game_log(
+        player_id,
+        game_id,
+        game_date,
+        season,
+        json_payload,
+        payload_hash,
+        batch_id
+    )
+    VALUES(
+        @game_id,
+        @game_date,
+        @season,
+        @json_payload,
+        HASHBYTES('SHA2_256', @json_payload),
+        @batch_id
+    )
 END;
 GO
-
-
-
 
