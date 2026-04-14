@@ -1,8 +1,7 @@
-
 -- PROCEDURES TO INSERT PAYLOADS INTO RAW TABLES
 
 -- raw.shot_chart_detail
-CREATE PROCEDURE InsertShots
+CREATE PROCEDURE raw.InsertShots
     @player_id INT,
     @game_id INT,
     @game_date DATE,
@@ -34,7 +33,7 @@ GO
 
 
 -- raw.player_game_log
-CREATE PROCEDURE InsertPlayerGame
+CREATE PROCEDURE raw.InsertPlayerGame
     @player_id INT,
     @game_id INT,
     @game_date DATE,
@@ -65,7 +64,7 @@ END;
 GO
 
 -- raw.play_by_play
-CREATE PROCEDURE InsertPlayByPlay
+CREATE PROCEDURE raw.InsertPlayByPlay
     @game_id INT,
     @game_date DATE,
     @season VARCHAR(10),
@@ -73,8 +72,7 @@ CREATE PROCEDURE InsertPlayByPlay
     @batch_id UNIQUEIDENTIFIER
 AS
 BEGIN
-    INSERT INTO raw.player_game_log(
-        player_id,
+    INSERT INTO raw.play_by_play(
         game_id,
         game_date,
         season,
@@ -95,7 +93,7 @@ GO
 
 
 -- raw.player_stats
-CREATE PROCEDURE InsertBoxScorePlayerTrack
+CREATE PROCEDURE raw.InsertBoxScorePlayerTrack
     @game_id INT,
     @game_date DATE,
     @season VARCHAR(10),
@@ -103,8 +101,7 @@ CREATE PROCEDURE InsertBoxScorePlayerTrack
     @batch_id UNIQUEIDENTIFIER
 AS
 BEGIN
-    INSERT INTO raw.player_game_log(
-        player_id,
+    INSERT INTO raw.box_score_player_track(
         game_id,
         game_date,
         season,
@@ -122,4 +119,3 @@ BEGIN
     )
 END;
 GO
-
