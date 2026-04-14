@@ -8,7 +8,7 @@ create_batch_id = """
 
 # Straight queries or stored procedures
 insert_shot_chart_detail = """
-                        EXEC InsertShots 
+                        EXEC raw.InsertShots 
                             @player_id = ?,
                             @game_id = ?,
                             @game_date  = ?,
@@ -20,7 +20,7 @@ insert_shot_chart_detail = """
 
 
 insert_player_game_log = """
-                        EXEC InsertPlayerGame
+                        EXEC raw.InsertPlayerGame
                             @player_id = ?,
                             @game_id = ?,
                             @game_date  = ?,
@@ -30,7 +30,7 @@ insert_player_game_log = """
                         """
 
 insert_play_by_play = """
-                        EXEC InsertPlayByPlay
+                        EXEC raw.InsertPlayByPlay
                             @game_id = ?,
                             @game_date  = ?,
                             @season = ?,
@@ -39,6 +39,7 @@ insert_play_by_play = """
                         """
 
 insert_box_score_player_track = """
+                        EXEC raw.InsertBoxScorePlayerTrack
                             @game_id = ?,
                             @game_date  = ?,
                             @season = ?,
