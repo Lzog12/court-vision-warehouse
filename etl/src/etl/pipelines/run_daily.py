@@ -81,8 +81,8 @@ def process_players() -> tuple[list[PlayerShots], list[PlayerGame]]:
         current_game_id = player_info['game_id']
 
         player_shots = shot_chart_detail(
-            tm_id=current_player_id,
-            pl_id=current_team_id,
+            tm_id=current_team_id,
+            pl_id=current_player_id,
             season=current_season,
             season_type=regular_season,
             date_from=day,
@@ -206,52 +206,7 @@ def to_database() -> None:
             print('ROLLBACK')
             raise RuntimeError(f'DATABASE INSERT FAILED: {e}') from e
         else:
-            # conn.commit()
-            # print('COMMITTED')
-            print('DONE')
-
-        import json
-        json_output_test = {}
-        # TEST the insert, put in file pipeline_test.json, remove the commit, rollback at the end
-        cursor.execute('SELECT * FROM raw.shot_chart_detail')
-        shot_results = cursor.fetchall()
-        # columns = [column[0] for column in cursor.description]
-        json_output_test['shot_chart_detail'] = [tuple(row) for row in shot_results]
-        # json_output_test['shot_chart_detail'] = shot_results
-
-        cursor.execute('SELECT * FROM raw.player_game_log')
-        player_results = cursor.fetchall()
-        # columns = [column[0] for column in cursor.description]
-        json_output_test['player_game_log'] = [tuple(row) for row in player_results]
-        # json_output_test['player_game_log'] = player_results
-
-        cursor.execute('SELECT * FROM raw.play_by_play')
-        play_by_play_results = cursor.fetchall()
-        # columns = [column[0] for column in cursor.description]
-        json_output_test['play_by_play'] = [tuple(row) for row in play_by_play_results]
-        # json_output_test['play_by_play'] = play_by_play_results
-
-        cursor.execute('SELECT * FROM raw.box_score_player_track')
-        box_score_results = cursor.fetchall()
-        # columns = [column[0] for column in cursor.description]
-        json_output_test['box_score_player_track'] = [tuple(row) for row in box_score_results]
-        # json_output_test['box_score_player_track'] = box_score_results
-
-
-        from datetime import datetime, date
-
-        def serializer(obj):
-            if isinstance(obj, (datetime, date)):
-                return obj.isoformat()
-            
-            if isinstance(obj, bytes):
-                return obj.decode("utf-8")  # convert bytes → string
-            
-            raise TypeError(f"Type {type(obj)} not serializable")
-
-        with open('json_output_test.json', 'w', encoding='utf-8') as f:
-            json.dump(json_output_test, f, indent=4, default=serializer)
-
-        conn.rollback()
+            conn.commit()
+            print('COMMITTED')
 
 to_database()

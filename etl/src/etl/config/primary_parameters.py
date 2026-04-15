@@ -16,6 +16,7 @@ from tqdm import tqdm
 
 # Game ids and game dates, add parameters
 def game_ids(date_from, date_to, season, season_type) -> list[list[str]]:
+
     try:
         # Begin from retrieving all game id's of a given day
         games = LeagueGameLog(
@@ -50,7 +51,8 @@ def player_and_team_id(game_ids: list[str]) -> dict:
     # Holds the final returned structure of all players
     all_players = {}
 
-    for gid in tqdm(game_ids, desc="Game id's for BoxScoreAdvancedV3..."):
+    for gid in tqdm(game_ids, desc=f"Loading game id's for BoxScoreAdvancedV3"):
+        tqdm.write(gid)
         try:
             raw_game = BoxScoreAdvancedV3(game_id=gid)
         
@@ -70,10 +72,10 @@ def player_and_team_id(game_ids: list[str]) -> dict:
                     'game_id': f'{cp['gameId']}'
                 }
 
-            return all_players
-
         except Exception as e:
             raise RuntimeError(f'ERR OCCURRED FOR ID {gid} --- ERROR: {e}') from e
+
+    return all_players
 
 
 
