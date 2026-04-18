@@ -23,7 +23,7 @@ class PlayByPlay(NamedTuple):
     pbp_info: dict
 
 
-class BoxScore(NamedTuple):
+class BoxScoreTrack(NamedTuple):
     game_id: str
     game_date: str
     season: str

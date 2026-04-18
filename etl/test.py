@@ -1,37 +1,42 @@
-import pyodbc
-from dotenv import load_dotenv
-import os
+# TESTING THE DEBUGGER 
 
-load_dotenv()
+print(__name__)
 
-# Load vars from .env
-DB_PASSWORD = os.getenv('MSSQL_PW')
-DB_UID = os.getenv('MSSQL_UID')
-DB_SERVER = os.getenv('MSSQL_SERVER')
-DB_NAME = os.getenv('DB_NAME')
-DB_DRIVER = os.getenv('DB_DRIVER')
+# def clean_numbers(values):
+#     cleaned = []
 
-# print(pyodbc.drivers())
+#     for v in values:
+#         if isinstance(v, str):
+#             v = int(v)
 
-conn = pyodbc.connect(
-            "Driver={ODBC Driver 18 for SQL Server};"
-            f"Server={DB_SERVER};"
-            f"Database={DB_NAME};"
-            f"Uid={DB_UID};"
-            f"Pwd={DB_PASSWORD};"
-            "Encrypt=yes;"
-            "TrustServerCertificate=no;"
-            "Connection Timeout=60;")
+#         cleaned.append(v)
+
+#     return cleaned
 
 
-cursor = conn.cursor()
+# def calculate_average(nums):
+#     total = 0
+    
+#     for n in nums:
+#         total += n
 
-player = "Steph"
-player = "Lebron"
-cursor.execute(f"SELECT * FROM dbo.court WHERE player NOT IN (?)", player)
+#     count = len(nums)
 
-results = cursor.fetchall()
-for r in results:
-    print(r)
+#     # Put a breakpoint here
+#     average = total / count
 
-conn.close()
+#     return average
+
+
+# def main():
+#     raw_data = [10, "20", 30, "40", None]   # Intentional bug: None
+
+#     numbers = clean_numbers(raw_data)
+
+#     result = calculate_average(numbers)
+
+#     print(f"Average: {result}")
+
+
+# if __name__ == "__main__":
+#     main()

@@ -1,6 +1,3 @@
-# Stagger endpoint execution
-import time
-
 # Endpoint extractors
 from ..extractors.shot_chart_detail import shot_chart_detail
 from ..extractors.play_by_play_v3 import play_by_play_v3
@@ -11,11 +8,12 @@ from ..extractors.box_score_player_track_v3 import box_score_player_track_v3
 from ..config.primary_parameters import game_ids, player_and_team_id
 
 # Data model types
-from ..utils.types import PlayerShots, PlayerGame, PlayByPlay, BoxScore
+from ..utils.types import PlayerShots, PlayerGame, PlayByPlay, BoxScoreTrack
 
 # Database
 from ..config.settings import build_connection_string
 from ..db.engine import SqlServerEngine
+from pyodbc import Connection
 
 # INSERT queries
 from ..db.insert_raw_query import (
@@ -26,14 +24,6 @@ from ..db.insert_raw_query import (
     insert_box_score_player_track
 )
 
-# Runtime parameters
-from ..config.runtime_parameters import (
-    get_date,
-    regular_season,
-    playoff_season,
-    current_season
-)
-
 # Cursor object type
 from pyodbc import Cursor
 
@@ -41,37 +31,42 @@ from pyodbc import Cursor
 from tqdm import tqdm
 
 
-"""Run database engine"""
-# Retrieve connection string containing env variables
-connection_string = build_connection_string()
-sql_engine = SqlServerEngine(conn_string=connection_string)
-sql_engine.connect()
-# Run player_index: from parent 'etl' directory.
-# Command: python3 -m src.etl.pipelines.run_daily
+"""Set up database engine"""
+def database_engine() -> Connection:
+    # Retrieve connection string containing env variables
+    connection_string = build_connection_string()
+    sql_engine = SqlServerEngine(conn_string=connection_string)
 
-day = get_date(True, '04/04/2026')
+    return sql_engine.connect()
 
-# Retrieve unique game ids from today's games (LeagueGameLog)
-uq_game_ids = game_ids(
-    date_from=day,
-    date_to=day,
-    season='2025', 
-    season_type=regular_season
-)
-# Returns dictionary of player information (player_id, team_id, game_id)
-player_team_ids = player_and_team_id(
-    game_ids=uq_game_ids
-)
-
-# Create batch id prior to endpoint calls, as it will need to be added to each record
-with sql_engine.connect() as conn:
+"""Only variable not passed in to main.py, created here in isolation"""
+with database_engine() as conn:
     cursor: Cursor = conn.cursor()
     batch_id = cursor.execute(create_batch_id).fetchone()[0]
 
-"""ENDPOINT CALLS"""
+def retrieve_game_ids(day: str, season_type) -> list[str]:
+    # Retrieve unique game ids from today's games (LeagueGameLog)
+    unique_game_ids = game_ids(
+        date_from=day,
+        date_to=day,
+        season='2025', 
+        season_type=season_type
+    )
 
+    return unique_game_ids
+
+def retrieve_player_and_team_ids(uq_game_ids: list[str]) -> dict[str, str | int]:
+    # Returns dictionary of player information (player_id, team_id, game_id)
+    player_and_team_ids = player_and_team_id(
+        game_ids=uq_game_ids
+    )
+
+    return player_and_team_ids
+
+
+"""ENDPOINT CALLS"""
 '''Process players section - shot_chart_detail and player_game_log'''
-def process_players() -> tuple[list[PlayerShots], list[PlayerGame]]:
+def process_players(player_team_ids: dict[str, str | int], day: str, season: str, season_type: str) -> tuple[list[PlayerShots], list[PlayerGame]]:
     all_player_shots: list[tuple] = []
     all_player_games: list[tuple] = []
 
@@ -79,20 +74,20 @@ def process_players() -> tuple[list[PlayerShots], list[PlayerGame]]:
         current_player_id = player_info['player_id']
         current_team_id = player_info['team_id']
         current_game_id = player_info['game_id']
-
+        
         player_shots = shot_chart_detail(
             tm_id=current_team_id,
             pl_id=current_player_id,
-            season=current_season,
-            season_type=regular_season,
+            season=season,
+            season_type=season_type,
             date_from=day,
             date_to=day,
         )
 
         player_game = player_game_log(
             pl_id=current_player_id,
-            season=current_season,
-            season_type=regular_season,
+            season=season,
+            season_type=season_type,
             date_from=day,
             date_to=day
         )
@@ -103,7 +98,7 @@ def process_players() -> tuple[list[PlayerShots], list[PlayerGame]]:
                 current_player_id,
                 current_game_id,
                 day,
-                current_season,
+                season,
                 player_shots,
                 batch_id
             )
@@ -115,20 +110,18 @@ def process_players() -> tuple[list[PlayerShots], list[PlayerGame]]:
                 current_player_id,
                 current_game_id,
                 day,
-                current_season,
+                season,
                 player_game,
                 batch_id
             )
         )
-
-        time.sleep(2)
 
     print('SUCCESSFULLY LOADED PLAYERS')
     return all_player_shots, all_player_games
 
 
 '''Process games section - play_by_play_v3 and box_score_player_track_v3'''
-def process_games() -> tuple[list[PlayByPlay], list[BoxScore]]:
+def process_games(uq_game_ids:list[str], day: str, season: str) -> tuple[list[PlayByPlay], list[BoxScoreTrack]]:
     all_pbp_games = []
     all_bxs_games = []
     
@@ -147,7 +140,7 @@ def process_games() -> tuple[list[PlayByPlay], list[BoxScore]]:
             (
                 game_id,
                 day,
-                current_season,
+                season,
                 pbp,
                 batch_id
             )
@@ -158,32 +151,23 @@ def process_games() -> tuple[list[PlayByPlay], list[BoxScore]]:
             (
                 game_id,
                 day,
-                current_season,
+                season,
                 bxs,
                 batch_id
             )
         )
 
-        time.sleep(2)
-
     print('SUCCESSFULLY LOADED TEAMS')
     return all_pbp_games, all_bxs_games
 
-p_shots, p_game = process_players()
-pbp_game, bxs_track = process_games()
 
-
-def convert_for_json(rows):
-    new_rows = []
-    for row in rows:
-        new_rows.append(tuple(row))
-
-    return new_rows
-
-
-def to_database() -> None:
+def to_database(p_shots: PlayerShots, 
+                p_game: PlayerGame, 
+                pbp_game: PlayByPlay, 
+                bxs_track: BoxScoreTrack, 
+                commit_toggle: bool = True) -> None:
     # Activate connection
-    with sql_engine.connect() as conn:
+    with database_engine() as conn:
         # Use a single transaction for all inserts
         conn.autocommit = False
         # Create cursor
@@ -206,7 +190,9 @@ def to_database() -> None:
             print('ROLLBACK')
             raise RuntimeError(f'DATABASE INSERT FAILED: {e}') from e
         else:
-            conn.commit()
-            print('COMMITTED')
-
-to_database()
+            if commit_toggle:
+                conn.commit()
+                print('COMMITTED')
+            elif not commit_toggle:
+                conn.rollback()
+                print('COMPLETED BUT ROLLED BACK')

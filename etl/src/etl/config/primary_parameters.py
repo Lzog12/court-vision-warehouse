@@ -15,7 +15,7 @@ from tqdm import tqdm
 # Runtime parameters: date, season, season type
 
 # Game ids and game dates, add parameters
-def game_ids(date_from, date_to, season, season_type) -> list[list[str]]:
+def game_ids(date_from, date_to, season, season_type) -> list[str]:
 
     try:
         # Begin from retrieving all game id's of a given day
@@ -47,7 +47,7 @@ def game_ids(date_from, date_to, season, season_type) -> list[list[str]]:
 
 
 # player and game ids into a dictionary using BoxScoreAdvancedV3
-def player_and_team_id(game_ids: list[str]) -> dict:
+def player_and_team_id(game_ids: list[str]) -> dict[str, str | int]:
     # Holds the final returned structure of all players
     all_players = {}
 

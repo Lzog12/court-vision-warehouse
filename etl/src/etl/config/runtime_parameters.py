@@ -13,12 +13,12 @@ def get_date(override: bool = False, alternate_date: str = '') -> str:
     # DATE PARAMETER - mm/dd/yyyy
     today = datetime.today()
     # Account for time zone (day -1)
-    day = datetime(day=today.day - 1, month=today.month, year=today.year).strftime('%m/%d/%Y')
+    day = datetime(day=today.day - 1, month=today.month, year=today.year).strftime('%m-%d-%Y')
 
     return day    
 
 
-# SHOT CHART DETAIL PARAMETERS
+# Season parameters
 regular_season = SeasonTypePlayoffs.regular
 playoff_season = SeasonTypePlayoffs.playoffs
 
