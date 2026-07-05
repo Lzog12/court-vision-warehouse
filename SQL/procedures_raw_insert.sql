@@ -32,36 +32,6 @@ END;
 GO
 
 
--- raw.player_game_log
-CREATE PROCEDURE raw.InsertPlayerGame
-    @player_id INT,
-    @game_id INT,
-    @game_date DATE,
-    @season VARCHAR(10),
-    @json_payload NVARCHAR(MAX),
-    @batch_id UNIQUEIDENTIFIER
-AS
-BEGIN
-    INSERT INTO raw.player_game_log(
-        player_id,
-        game_id,
-        game_date,
-        season,
-        json_payload,
-        payload_hash,
-        batch_id
-    )
-    VALUES(
-        @player_id,
-        @game_id,
-        @game_date,
-        @season,
-        @json_payload,
-        HASHBYTES('SHA2_256', @json_payload),
-        @batch_id
-    )
-END;
-GO
 
 -- raw.play_by_play
 CREATE PROCEDURE raw.InsertPlayByPlay
@@ -91,28 +61,61 @@ BEGIN
 END;
 GO
 
-
--- raw.player_stats
-CREATE PROCEDURE raw.InsertBoxScorePlayerTrack
+-- raw.player_game_log
+CREATE PROCEDURE raw.InsertPlayerGame
+    @player_id INT,
     @game_id INT,
     @game_date DATE,
     @season VARCHAR(10),
+    @season_segment VARCHAR(20),
     @json_payload NVARCHAR(MAX),
     @batch_id UNIQUEIDENTIFIER
 AS
 BEGIN
-    INSERT INTO raw.box_score_player_track(
+    INSERT INTO raw.player_game_log(
+        player_id,
         game_id,
         game_date,
         season,
+        season_segment,
         json_payload,
         payload_hash,
         batch_id
     )
     VALUES(
+        @player_id,
         @game_id,
         @game_date,
         @season,
+        @season_segment,
+        @json_payload,
+        HASHBYTES('SHA2_256', @json_payload),
+        @batch_id
+    )
+END;
+GO
+
+-- raw.player_stats
+CREATE PROCEDURE raw.InsertLeagueGame
+    @game_date DATE,
+    @season VARCHAR(10),
+    @season_segment VARCHAR(20),
+    @json_payload NVARCHAR(MAX),
+    @batch_id UNIQUEIDENTIFIER
+AS
+BEGIN
+    INSERT INTO raw.league_game_log(
+        game_date,
+        season,
+        season_segment,
+        json_payload,
+        payload_hash,
+        batch_id
+    )
+    VALUES(
+        @game_date,
+        @season,
+        @season_segment,
         @json_payload,
         HASHBYTES('SHA2_256', @json_payload),
         @batch_id

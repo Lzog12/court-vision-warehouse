@@ -2,13 +2,13 @@
 from ..extractors.shot_chart_detail import shot_chart_detail
 from ..extractors.play_by_play_v3 import play_by_play_v3
 from ..extractors.player_game_log import player_game_log
-from ..extractors.box_score_player_track_v3 import box_score_player_track_v3
+from ..extractors.league_game_log import league_game_log
 
 # Primary parameters: retrieve data for endpoint feeds (game_id, team_id, player_id)
 from ..config.primary_parameters import game_ids, player_and_team_id
 
 # Data model types
-from ..utils.types import PlayerShots, PlayerGame, PlayByPlay, BoxScoreTrack
+from ..utils.types import PlayerShots, PlayerGame, PlayByPlay, LeagueGame
 
 # Database
 from ..config.settings import build_connection_string
@@ -21,7 +21,7 @@ from ..db.insert_raw_query import (
     insert_shot_chart_detail,
     insert_player_game_log,
     insert_play_by_play,
-    insert_box_score_player_track
+    insert_league_game_log
 )
 
 # Cursor object type
@@ -111,6 +111,7 @@ def process_players(player_team_ids: dict[str, str | int], day: str, season: str
                 current_game_id,
                 day,
                 season,
+                season_type,
                 player_game,
                 batch_id
             )
@@ -120,20 +121,17 @@ def process_players(player_team_ids: dict[str, str | int], day: str, season: str
     return all_player_shots, all_player_games
 
 
-'''Process games section - play_by_play_v3 and box_score_player_track_v3'''
-def process_games(uq_game_ids:list[str], day: str, season: str) -> tuple[list[PlayByPlay], list[BoxScoreTrack]]:
+'''Process games section - play_by_play_v3 and league_game_log'''
+def process_games(uq_game_ids:list[str], day: str, season: str, season_type: str) -> tuple[list[PlayByPlay], list[LeagueGame]]:
     all_pbp_games = []
-    all_bxs_games = []
+    all_league_games = []
     
-    for game_id in tqdm(uq_game_ids, desc='Looping over game ids for PlayByPlayV3 and BoxScoreAdvancedV3 endpoints'):
+    for game_id in tqdm(uq_game_ids, desc='Looping over game ids for PlayByPlayV3 and LeagueGameLog endpoints'):
 
-        pbp = play_by_play_v3(
+        play_by_play = play_by_play_v3(
             gm_id=game_id
         )
 
-        bxs = box_score_player_track_v3(
-            gm_id=game_id
-        )
 
         # Final tuple that will be added as arguments in SQL INSERT
         all_pbp_games.append(
@@ -141,30 +139,37 @@ def process_games(uq_game_ids:list[str], day: str, season: str) -> tuple[list[Pl
                 game_id,
                 day,
                 season,
-                pbp,
-                batch_id
-            )
-        )
-        
-        # Final tuple that will be added as arguments in SQL INSERT
-        all_bxs_games.append(
-            (
-                game_id,
-                day,
-                season,
-                bxs,
+                play_by_play,
                 batch_id
             )
         )
 
+    league_games = league_game_log(
+        season = season,
+        season_type = season_type,
+        date_from = day,
+        date_to = day
+    )
+        
+    # Final tuple that will be added as arguments in SQL INSERT
+    all_league_games.append(
+        (
+            day,
+            season,
+            season_type,
+            league_games,
+            batch_id
+        )
+    )
+
     print('SUCCESSFULLY LOADED TEAMS')
-    return all_pbp_games, all_bxs_games
+    return all_pbp_games, all_league_games
 
 
 def to_database(p_shots: PlayerShots, 
                 p_game: PlayerGame, 
                 pbp_game: PlayByPlay, 
-                bxs_track: BoxScoreTrack, 
+                l_game: LeagueGame, 
                 commit_toggle: bool = True) -> None:
     # Activate connection
     with database_engine() as conn:
@@ -183,8 +188,8 @@ def to_database(p_shots: PlayerShots,
             print('SUCCESS INSERT: raw.player_game_log')
             cursor.executemany(insert_play_by_play, pbp_game)
             print('SUCCESS INSERT: raw.play_by_play')
-            cursor.executemany(insert_box_score_player_track, bxs_track)
-            print('SUCCESS INSERT: raw.box_score_player_track')
+            cursor.executemany(insert_league_game_log, l_game)
+            print('SUCCESS INSERT: raw.league_game_log')
         except Exception as e:
             conn.rollback()
             print('ROLLBACK')

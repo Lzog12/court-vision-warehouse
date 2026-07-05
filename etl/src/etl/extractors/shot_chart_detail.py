@@ -7,7 +7,7 @@ CONTEXT_MEASURE = 'FGA'
 def shot_chart_detail(tm_id: int, pl_id: int, season: str, season_type: str, date_from: str, date_to: str) -> dict:
     
     """
-    Function to call ShotCharDetail endpoint with parameters to retrieve all shots from a given player in a given day
+    Function to call ShotChartDetail endpoint with parameters to retrieve all shots from a given player in a given day
 
     :param tm_id: team id of current iteration
     :param pl_id: player id of current iteration

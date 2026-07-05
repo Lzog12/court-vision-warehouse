@@ -25,6 +25,7 @@ insert_player_game_log = """
                             @game_id = ?,
                             @game_date  = ?,
                             @season = ?,
+                            @season_segment = ?,
                             @json_payload = ?,
                             @batch_id = ?
                         """
@@ -38,11 +39,11 @@ insert_play_by_play = """
                             @batch_id = ?
                         """
 
-insert_box_score_player_track = """
-                        EXEC raw.InsertBoxScorePlayerTrack
-                            @game_id = ?,
+insert_league_game_log = """
+                        EXEC raw.InsertLeagueGame
                             @game_date  = ?,
                             @season = ?,
+                            @season_segment = ?,
                             @json_payload = ?,
                             @batch_id = ?
                         """

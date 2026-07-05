@@ -3,28 +3,29 @@ from typing import NamedTuple # Lightweight object that works like a regular tup
 class PlayerShots(NamedTuple):
     player_id: int
     game_id: str
-    day: str
+    game_date: str
     season: str
-    shots: dict
+    shots_data: dict
 
 
 class PlayerGame(NamedTuple):
     player_id: int
     game_id: str
-    day: str
+    game_date: str
     season: str
-    game: dict
+    season_segment: str
+    game_data: dict
 
 
 class PlayByPlay(NamedTuple):
     game_id: str
     game_date: str
     season: str
-    pbp_info: dict
+    pbp_data: dict
 
 
-class BoxScoreTrack(NamedTuple):
-    game_id: str
+class LeagueGame(NamedTuple):
     game_date: str
     season: str
-    bxs_info: dict
+    season_segment: str
+    game_data: dict

@@ -38,13 +38,13 @@ CREATE CLUSTERED INDEX idx_play_by_play
 
 -- .PlayerGameLog
 -- raw schema
--- Player-season grain. One JSON response (row) per player-season combination which contains all games for that given season
--- NO! Player-game grain. One JSON response (row) per player-game i.e. each player will have many rows of games for each season
+-- Player-game grain. One JSON response (row) per player-game i.e. each player will have one row for one game of the given date
 CREATE TABLE raw.player_game_log (
     player_id INT NOT NULL,
     game_id INT NOT NULL,
     game_date DATE NOT NULL,
     season VARCHAR(10) NOT NULL,
+    season_segment VARCHAR(20) NOT NULL,
     json_payload NVARCHAR(MAX) NOT NULL,
     payload_hash VARBINARY(32) NOT NULL,           -- SHA-256 bytes
     ingested_at DATETIME2(0) NOT NULL DEFAULT SYSUTCDATETIME(),
@@ -55,25 +55,20 @@ CREATE TABLE raw.player_game_log (
 CREATE CLUSTERED INDEX idx_player_game
     ON raw.player_game_log (game_date);
 
--- .BoxScorePlayerTrackV2.PlayerStats (Includes starting position of player and team starters for both teams)
+-- .LeagueGameLog
 -- raw schema
--- Game grain. One JSON response per game combination (boxscoreplayertrackv2.player_stats)
-CREATE TABLE raw.box_score_player_track (
-    game_id INT NOT NULL,
+-- League-game grain. One JSON response (row) for all games in a given day
+CREATE TABLE raw.league_game_log (
     game_date DATE NOT NULL,
     season VARCHAR(10) NOT NULL,
+    season_segment VARCHAR(20) NOT NULL,
     json_payload NVARCHAR(MAX) NOT NULL,
     payload_hash VARBINARY(32) NOT NULL,           -- SHA-256 bytes
     ingested_at DATETIME2(0) NOT NULL DEFAULT SYSUTCDATETIME(),
     batch_id UNIQUEIDENTIFIER NOT NULL,
-    CONSTRAINT uq_player_stats UNIQUE NONCLUSTERED (game_id)
+    CONSTRAINT uq_league_game UNIQUE NONCLUSTERED (game_date)
 );
 
-CREATE CLUSTERED INDEX idx_box_score_player_track
-    ON raw.box_score_player_track (game_date);
+CREATE CLUSTERED INDEX idx_league_game
+    ON raw.league_game_log (game_date);
 
-    
-
-SELECT TABLE_NAME
-FROM INFORMATION_SCHEMA.TABLES
-WHERE TABLE_SCHEMA = 'raw';

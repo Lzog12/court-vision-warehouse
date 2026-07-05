@@ -77,6 +77,11 @@ CREATE TABLE staging.stg_nbaapi__player_game(
     player_id_nk INT NOT NULL,
     game_id_nk INT NOT NULL,
 
+    -- dim_seasons (identify season context used by source)
+    season_id_nk INT,
+    season CHAR(7),
+    season_segment VARCHAR(20) CHECK(season_segment IN ('Regular Season', 'Playoffs')),
+
     -- box score measures
     min TINYINT,
     fgm TINYINT,
@@ -93,10 +98,6 @@ CREATE TABLE staging.stg_nbaapi__player_game(
     ot_fgm INT,                             -- (CM)
     plus_minus TINYINT,                     -- may exceed TINYINT range; consider SMALLINT
 
-    -- dim_seasons (identify season context used by source)
-    season_id_nk INT,
-    season CHAR(7),
-    season_segment VARCHAR(20) CHECK(season_segment IN ('Regular Season', 'Playoffs')),
 
     CONSTRAINT uq_stg_player_game UNIQUE (player_id_nk, game_id_nk, season_id_nk)  -- grain: player-game-season
 );
@@ -104,34 +105,30 @@ CREATE TABLE staging.stg_nbaapi__player_game(
 
 
 
-CREATE TABLE staging.stg_nbaapi__game_team_stats(
-    -- team-game grain (results by team for a game)
+CREATE TABLE staging.stg_nbaapi__league_game(
+    -- day-games grain (results by team for each game in a given day). Unique entries of games.
     team_id_nk INT NOT NULL,
     game_id_nk INT NOT NULL,
 
-    starters VARCHAR(150),
+    game_date DATE NOT NULL,
+
+    season_id_nk INT,
+    season CHAR(7),
+    season_segment VARCHAR(20) CHECK(season_segment IN ('Regular Season', 'Playoffs')),
+
+    matchup VARCHAR(15),
+
+    htm CHAR(3),
+    vtm CHAR(3),
+
     htm_result CHAR(1) CHECK (htm_result IN ('W', 'L')),
     vtm_result CHAR(1) CHECK (vtm_result IN ('W', 'L')),
 
-    CONSTRAINT uq_stg_game_team_stats UNIQUE (team_id_nk, game_id_nk)  -- grain: team-game
+    htm_pts TINYINT,
+    vtm_pts TINYINT,
+
+    CONSTRAINT uq_stg_league_game UNIQUE (team_id_nk, game_id_nk)  -- grain: day-games
 );
--- Optional indexes: IX(game_id_nk), IX(team_id_nk)
-
-
-
--- One row represents one game for one player, their starting position in that game
-CREATE TABLE staging.stg_nbaapi__game_player_stats(
-    -- player-game grain (starting position)
-    team_id_nk INT NOT NULL,
-    game_id_nk INT NOT NULL,
-    player_id_nk INT NOT NULL,
-
-    start_position CHAR(1) NULL,            -- 'G','F','C' (or similar); document accepted values
-
-    CONSTRAINT uq_stg_game_player_stats UNIQUE (team_id_nk, game_id_nk, player_id_nk)  -- grain: player-game (by team)
-);
--- Optional indexes: IX(game_id_nk), IX(player_id_nk)
-
 
 /* ===========================================================
    NEXT STEPS (not in this script):
