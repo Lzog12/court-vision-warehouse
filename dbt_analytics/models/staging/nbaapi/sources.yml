@@ -1,0 +1,20 @@
+version: 2
+
+sources:
+  - name: nba_api
+    schema: raw
+    description: Raw NBA data loaded into Azure SQL by the Python ingestion Pipeline.
+
+    tables:
+      - name: shot_chart_detail
+        description: Raw shot-level data.
+
+      - name: play_by_play
+        description: Raw play-by-play data.
+
+      - name: player_game_log
+        description: Raw player-game data.
+
+      - name: league_game_log
+        description: Raw league-game data.
+

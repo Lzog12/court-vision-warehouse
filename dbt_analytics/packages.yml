@@ -1,0 +1,4 @@
+# Allow the use of dbt packages for functions such as 'generate_surrogate_key', 'date_spine' etc.
+packages:
+  - package: dbt-labs/dbt_utils
+    version: 1.4.1

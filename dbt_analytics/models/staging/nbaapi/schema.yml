@@ -1,0 +1,9 @@
+
+version: 2
+
+models:
+  - name: stg_nbaapi__player_shots
+    description: >
+      Staging model for player shot data from the NBA API ShotChartDetail endpoint.
+      Cleans and standardises the raw shot-level data loaded into the raw schema.
+
