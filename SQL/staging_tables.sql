@@ -106,7 +106,7 @@ CREATE TABLE staging.stg_nbaapi__player_game(
 
 
 CREATE TABLE staging.stg_nbaapi__league_game(
-    -- day-games grain (results by team for each game in a given day). Unique entries of games.
+    -- team-games grain (results by team for each game in a given day). Unique entries of games.
     team_id_nk INT NOT NULL,
     game_id_nk INT NOT NULL,
 
@@ -117,17 +117,11 @@ CREATE TABLE staging.stg_nbaapi__league_game(
     season_segment VARCHAR(20) CHECK(season_segment IN ('Regular Season', 'Playoffs')),
 
     matchup VARCHAR(15),
+    
+    result CHAR(1) CHECK (result IN ('W', 'L')),
+    pts TINYINT,
 
-    htm CHAR(3),
-    vtm CHAR(3),
-
-    htm_result CHAR(1) CHECK (htm_result IN ('W', 'L')),
-    vtm_result CHAR(1) CHECK (vtm_result IN ('W', 'L')),
-
-    htm_pts TINYINT,
-    vtm_pts TINYINT,
-
-    CONSTRAINT uq_stg_league_game UNIQUE (team_id_nk, game_id_nk)  -- grain: day-games
+    CONSTRAINT uq_stg_league_game UNIQUE (team_id_nk, game_id_nk)  -- grain: team-games
 );
 
 /* ===========================================================
