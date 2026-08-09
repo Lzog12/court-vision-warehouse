@@ -2,8 +2,139 @@
 version: 2
 
 models:
+  - name: stg_nbaapi__play_by_play
+    description: >
+      Staging model for play_by_play data from the NBA API PlayByPlayV3 endpoint.
+      Cleans and standardises the raw play_by_play data loaded from the raw schema - one row per nba play in a given game.
+  
   - name: stg_nbaapi__player_shots
     description: >
       Staging model for player shot data from the NBA API ShotChartDetail endpoint.
-      Cleans and standardises the raw shot-level data loaded into the raw schema.
+      Cleans and standardises the raw shot-level data loaded from the raw schema - one row per nba shot attempt.
 
+    columns:
+      - name: player_name
+        description: Player name returned by nba_api
+        data_tests:
+          - not_null
+      
+      - name: team_id
+        description: NBA team identifier
+        data_tests:
+          - not_null
+
+      - name: team_name
+        description: NBA team name (full name)
+        data_tests:
+          - not_null
+
+      - name: game_id_nk
+        description: Natural key identifying the NBA game
+        data_tests:
+          - not_null
+
+      - name: htm
+        description: 3 letter abbreviation of the home team
+        data_tests:
+          - not_null
+
+      - name: vtm
+        description: 3 letter abbreviation of the visiting team
+        data_tests:
+          - not_null
+
+      - name: game_date
+        description: Date on which the game was played
+        data_tests:
+          - not_null
+
+      - name: season
+        description: Season in which the game was played
+        data_tests:
+          - not_null
+
+      - name: shot_id_nk
+        description: >
+          Natural key for a shot attempt, created by combining game_id and game_event_id
+        data_tests:
+          - not_null
+          - unique
+
+      - name: game_event_id_nk
+        description: The natural key from nba_api for the unique game event in a game
+        data_tests:
+          - not_null
+
+      - name: event_type
+        description: Indicates either 'missed shot' or 'made shot'
+        data_tests:
+          - not_null
+
+      - name: action_type
+        description: Type of basketball action implemented to take the shot
+        data_tests:
+          - not_null
+
+      - name: shot_type
+        description: Indicates 2pt or 3pt attempt
+        data_tests:
+          - not_null
+
+      - name: shot_zone_basic
+        description: >
+          Shot is assigned to a specific shot zone on a basketball court
+          Restricted area
+          Above the break 3
+          Mid-range
+          In The Paint (Non-RA)
+        data_tests:
+          - not_null
+
+      - name: shot_zone_area
+        description: Indicates area on the court where shot was taken with a combination of [left, right, center]
+        data_tests:
+          - not_null
+
+      - name: shot_zone_range
+        description: Gives a rough range where shot was taken from (feet)
+        data_tests:
+          - not_null
+
+      - name: shot_distance
+        description: Exact shot distance (feet) from the basket
+        data_tests:
+          - not_null
+
+      - name: loc_x
+        description: Exact x-axis on the court where shot was taken from
+        data_tests:
+          - not_null
+
+      - name: loc_y
+        description: Exact y-axis on the court where shot was taken from
+        data_tests:
+          - not_null
+
+      - name: is_bucket
+        description: Indicates whether the shot was made or not with a 0 or 1
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [0, 1]
+                quote: false #Ensures it will NOT single-quote the list of accepted values
+      
+      - name: period_no
+        description: Period of the game that the shot was taken in
+        data_tests:
+          - not_null
+      
+      - name: min_left
+        description: Minutes left in the quarter when the shot was taken
+        data_tests:
+          - not_null
+
+      - name: sec_left
+        description: Seconds (+ minute) left in the quarter when the shot was taken
+        data_tests:
+          - not_null
