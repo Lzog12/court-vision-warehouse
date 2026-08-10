@@ -2,19 +2,21 @@
 version: 2
 
 models:
-  - name: stg_nbaapi__play_by_play
-    description: >
-      Staging model for play_by_play data from the NBA API PlayByPlayV3 endpoint.
-      Cleans and standardises the raw play_by_play data loaded from the raw schema - one row per nba play in a given game.
-  
+
   - name: stg_nbaapi__player_shots
     description: >
       Staging model for player shot data from the NBA API ShotChartDetail endpoint.
       Cleans and standardises the raw shot-level data loaded from the raw schema - one row per nba shot attempt.
 
     columns:
+      - name: player_id_nk
+        description: Id of the player that took the shot, returned by nba_api.
+        data_tests:
+          - not_null
+
+
       - name: player_name
-        description: Player name returned by nba_api
+        description: Name of the player that took the shot, returned by nba_api.
         data_tests:
           - not_null
       
@@ -138,3 +140,98 @@ models:
         description: Seconds (+ minute) left in the quarter when the shot was taken
         data_tests:
           - not_null
+
+
+  - name: stg_nbaapi__play_by_play
+    description: >
+      Staging model for shot events from the NBA API PlayByPlayV3 endpoint.
+      Filters the raw play-by-play feed to field goal attempts only and standardises 
+      the relevant shot-level fields
+
+    columns:
+      - name: player_id_nk
+        description: Id of the player that took the shot, returned by nba_api.
+        data_tests:
+          - not_null
+
+      - name: shot_id_nk
+        description: >
+          Natural id of the shot taken, derived from 'actionNumber' in nba_api. 
+          Combination of game_id and game_event_id
+        data_tests:
+          - not_null
+          - unique
+
+      - name: game_id_nk
+        description: Natural key identifying the NBA game
+        data_tests:
+        - not_null
+
+      - name: home_pts
+        description: Amount of points accumulated by the home team at the time of that game_event_id
+
+      - name: away_pts
+        description: Amount of points accumulated by the away team at the time of that game_event_id
+
+
+  - name: stg_nbaapi__player_game
+    description: >
+      Staging model for individual player game statistics.
+      One row per player per game.
+
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - player_id_nk
+              - game_id_nk
+
+    columns:
+      - name: player_id_nk
+        description: Id of the player that played the game.
+        data_tests:
+          - not_null
+
+      - name: game_id_nk
+        description: Game in which the player played in
+        data_tests:
+          - not_null
+      
+      - name: season_id_nk
+        description: Id of the season returned by nba_api
+      
+      - name: season
+        description: Season in which the game was played
+        data_tests:
+          - not_null
+      
+      - name: season_segment
+        description: Season segment (regular season, playoffs) in which the game was played
+        data_tests:
+          - not_null
+      
+      - name: min
+        description: Minutes played by the player
+      
+      - name: fgm
+        description: Field goals made by the player
+
+      - name: fga
+        description: Field goal attempts by the player
+
+      - name: fg3m
+        description: 3pt field goals made by the player
+
+      - name: fg3a
+        description: 3pt field goals attempts by the player
+
+      - name: pts
+        description: Total points scored by the player
+
+      - name: plus_minus
+        description: >
+          Player plus-minus for the game, representing the team's point differential
+          while the player was on the court.
+
+
+
