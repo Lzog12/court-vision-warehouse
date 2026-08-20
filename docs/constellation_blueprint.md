@@ -106,19 +106,20 @@ and relationships. Data types are aligned with **SQL Server** conventions.
 
 ---
 
-### **dim_games**
-- game_key INT IDENTITY PRIMARY KEY
+### **dim_team_games**
+- game_key 
+- team_key
+- team_game_key
 - game_id_nk INT UNIQUE  -- Natural Key
+- team_id_nk INT UNIQUE  -- Natural Key
 - matchup VARCHAR(15)
+- game_date
+- team_abbrev
+- points
+- result
 - htm CHAR(3)
 - vtm CHAR(3)
-- htm_starters VARCHAR(45)
-- vtm_starters VARCHAR(45)
-- htm_result CHAR(3) CHAR(1) CHECK (result IN ('W', 'L'))
-- vtm_result CHAR(3) CHAR(1) CHECK (result IN ('W', 'L'))
-- season VARCHAR(10)
-- season_segment VARCHAR(20)
-- game_date DATE
+
 
 ---
 

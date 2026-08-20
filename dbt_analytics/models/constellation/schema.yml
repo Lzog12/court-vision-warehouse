@@ -1,0 +1,159 @@
+
+version: 2
+
+models:
+  - name: dim_shots
+    description: >
+      Shot-level descriptive dimension containing one row per NBA shot attempt.
+
+    columns:
+      - name: shot_key
+        description: Surrogate key identifying the shot record.
+        data_tests:
+          - not_null
+          - unique
+
+      - name: shot_id_nk
+        description: Natural key identifying the shot attempt.
+        data_tests:
+          - not_null
+          - unique
+
+      - name: game_id_nk
+        description: Natural key identifying the game.
+        data_tests:
+          - not_null
+
+      - name: game_event_id_nk
+        description: Event identifier for the shot within the game.
+        data_tests:
+          - not_null
+
+      - name: action_type
+        description: Descriptive shot action type, such as jump shot or dunk shot.
+
+      - name: shot_type
+        description: Shot type, such as 2PT field goal or 3PT field goal.
+
+      - name: shot_zone_basic
+        description: Broad shot-zone classification.
+
+      - name: shot_zone_area
+        description: Court area classification for the shot.
+
+      - name: shot_zone_range
+        description: Distance-range classification for the shot.
+
+      - name: event_type
+        description: Shot result classification, such as made shot or missed shot.
+
+
+  - name: dim_team_games
+    description: >
+      Team-game dimension containing one row per team per NBA game.
+      Each NBA game is represented by two rows, one for each participating team.
+    
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - game_id_nk
+              - team_id_nk
+      
+    columns:
+      - name: team_game_key
+        description: >
+          Surrogate key uniquely identifying a team-game record.
+        data_tests:
+          - not_null
+          - unique
+
+      - name: game_key
+        description: >
+          Surrogate key identifying the NBA game.
+
+      - name: team_key
+        description: >
+          Surrogate key identifying the NBA team.
+
+      - name: game_id_nk
+        description: >
+          Natural key identifying the NBA game.
+        data_tests:
+          - not_null
+
+      - name: team_id_nk
+        description: >
+          Natural key identifying the NBA team.
+        data_tests:
+          - not_null
+
+      - name: matchup
+        description: >
+          NBA matchup label showing the participating teams and whether
+          the team represented by the row played at home or away,
+          for example "LAC @ PHX" or "CHI vs. CLE". NOT 100% reliable coming from nbaapi
+        data_tests:
+          - not_null
+
+      - name: game_date
+        description: >
+          Date on which the game was played.
+        data_tests:
+          - not_null
+
+      - name: team_abbrev
+        description: >
+          Three-letter abbreviation identifying the team represented by the row,
+          for example CLE or LAL.
+        data_tests:
+          - not_null
+
+      - name: points
+        description: >
+          Total points scored by the team represented by the row.
+        data_tests:
+          - not_null
+
+      - name: result
+        description: >
+          Game result from the perspective of the team represented by the row.
+          W indicates a win and L indicates a loss.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['W', 'L']
+
+
+  - name: dim_teams
+    description: >
+      Team dimension containing one row per NBA team.
+
+    columns:
+      - name: team_key
+        description: >
+          Surrogate key uniquely identifying the NBA team.
+        data_tests:
+          - not_null
+          - unique
+
+      - name: team_id_nk
+        description: >
+          Natural key identifying the NBA team, returned by nba_api.
+        data_tests:
+          - not_null
+          - unique
+
+      - name: team_name
+        description: >
+          Full NBA team name.
+        data_tests:
+          - not_null
+
+      - name: team_abbrev
+        description: >
+          Three-letter abbreviation identifying the NBA team,
+          for example CLE or LAL.
+        data_tests:
+          - not_null

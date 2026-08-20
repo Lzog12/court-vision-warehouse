@@ -31,13 +31,15 @@ clean-targets:         # directories to be removed by `dbt clean`
 # files using the `{{ config(...) }}` macro.
 models:
   dbt_analytics:
-    # Config indicated by + and applies to all files under models/example/
+  
     staging:
       +materialized: view
       +schema: staging
+
+    constellation:
+      +materialized: table
+      +schema: constellation
+
     marts:
-      +materialized: table
+      +materialized: view
       +schema: marts
-    warehouse:
-      +materialized: table
-      +schema: warehouse

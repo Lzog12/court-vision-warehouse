@@ -47,7 +47,7 @@ team_id -> team_id
 team_name -> team_name
 team_abbrev -> team_abbrev
 
-###### stg_nbaapi__league_game_log -> dim_games
+###### stg_nbaapi__league_game_log -> dim_team_games
 * STAGING col -> STAR SCHEMA col
 (Generated) IDENTITY -> game_key
 game_id_nk -> game_id_nk

@@ -234,4 +234,66 @@ models:
           while the player was on the court.
 
 
+  - name: stg_nbaapi__league_game
+    description: >
+      Staging model for team-level game statistics.
+      One row per team per game, resulting in two rows for each NBA game.
 
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - team_id_nk
+              - game_id_nk
+
+    columns:
+      - name: team_id_nk
+        description: Id of the team that played the game.
+        data_tests:
+          - not_null
+
+      - name: game_id_nk
+        description: Game in which the team played in
+        data_tests:
+          - not_null
+      
+      - name: game_date
+        description: Date of the game
+        data_tests:
+          - not_null
+
+      - name: team_abbrev
+        description: Team name abbreviation
+        data_tests:
+          - not_null
+
+      - name: season_id_nk
+        description: Id of the season returned by nba_api
+      
+      - name: season
+        description: Season in which the game was played
+        data_tests:
+          - not_null
+      
+      - name: season_segment
+        description: Season segment (regular season, playoffs) in which the game was played
+        data_tests:
+          - not_null
+      
+      - name: matchup
+        description: >
+          NBA API matchup label identifying the opposing teams and whether the team
+          played at home or away, for example "LAL vs. BOS" or "BOS @ LAL".
+
+      - name: result
+        description: >
+          Game result from the perspective of the team represented by the row.
+          W indicates a win and L indicates a loss.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['W', 'L']
+                quote: true
+
+      - name: points
+        description: Total points scored by the team

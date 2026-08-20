@@ -4,7 +4,7 @@ with player_shot_data as(
 
         s.player_id as player_id_nk,
         CAST(JSON_VALUE(j.value, '$[4]') as varchar(50)) as player_name,
-        CAST(JSON_VALUE(j.value, '$[5]') as int) as team_id,
+        CAST(JSON_VALUE(j.value, '$[5]') as int) as team_id_nk,
         CAST(JSON_VALUE(j.value, '$[6]') as varchar(40)) as team_name,
         s.game_id as game_id_nk,
         CAST(JSON_VALUE(j.value, '$[22]') as CHAR(3)) as htm,
