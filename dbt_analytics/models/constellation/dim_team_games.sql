@@ -1,7 +1,7 @@
 with games as (
 
   select
-    {{ dbt_utils.generate_surrogate_key(['game_id_nk', 'team_id_nk']) }} as team_game_key,
+    {{ dbt_utils.generate_surrogate_key(['team_id_nk', 'game_id_nk']) }} as team_game_key,
     {{ dbt_utils.generate_surrogate_key(['game_id_nk']) }} as game_key,
     {{ dbt_utils.generate_surrogate_key(['team_id_nk']) }} as team_key,
     game_id_nk,

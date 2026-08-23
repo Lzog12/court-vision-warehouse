@@ -11,6 +11,7 @@ with player_shot_data as(
         CAST(JSON_VALUE(j.value, '$[23]') as CHAR(3)) as vtm,
         s.game_date as game_date,
         s.season as season,
+        s.season_segment as season_segment,
         CAST(CONCAT(s.game_id, JSON_VALUE(j.value, '$[2]')) as bigint) as shot_id_nk, -- game_id and game_event_id
         CAST(JSON_VALUE(j.value, '$[2]') as INT) as game_event_id_nk,
         CAST(JSON_VALUE(j.value, '$[10]') as varchar(30)) as event_type,

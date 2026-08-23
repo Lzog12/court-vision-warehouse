@@ -18,7 +18,9 @@ with dim_shots as (
 ),
 
 final as (
+
     select * from dim_shots
+    
 )
 
 select * from final;

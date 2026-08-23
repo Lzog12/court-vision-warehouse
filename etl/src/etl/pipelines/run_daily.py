@@ -99,6 +99,7 @@ def process_players(player_team_ids: dict[str, str | int], day: str, season: str
                 current_game_id,
                 day,
                 season,
+                season_type,
                 player_shots,
                 batch_id
             )

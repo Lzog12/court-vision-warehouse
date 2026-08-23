@@ -9,6 +9,7 @@ CREATE TABLE raw.shot_chart_detail (
   game_id INT NOT NULL,
   game_date DATE NOT NULL,
   season VARCHAR(10) NOT NULL,
+  season_segment VARCHAR(20) NOT NULL,
   json_payload NVARCHAR(MAX) NOT NULL,
   payload_hash VARBINARY(32) NOT NULL,           -- SHA-256 bytes
   ingested_at DATETIME2(0) NOT NULL DEFAULT SYSUTCDATETIME(),

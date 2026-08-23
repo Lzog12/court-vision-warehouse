@@ -13,6 +13,7 @@ insert_shot_chart_detail = """
                             @game_id = ?,
                             @game_date  = ?,
                             @season = ?,
+                            @season_segment = ?,
                             @json_payload = ?,
                             @batch_id = ?
                         """

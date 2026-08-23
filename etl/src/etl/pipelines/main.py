@@ -56,8 +56,8 @@ def main(season_final: str, season_type_final: str, override_final: bool = False
 if __name__ == '__main__':
     main(
         season_final=current_season, #2025-26
-        season_type_final=regular_season, 
+        season_type_final=playoff_season, 
         override_final=True, #If true, set new date in date_final, otherwise can omit both override and date. Changes from default date (today) to custom date
-        date_final='12-17-2025', # mm-dd-yyyy
+        date_final='06-13-2026', # mm-dd-yyyy
         commit_toggle_final= True #Commit to database option
     )

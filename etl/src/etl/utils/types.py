@@ -5,6 +5,7 @@ class PlayerShots(NamedTuple):
     game_id: str
     game_date: str
     season: str
+    season_segment: str
     shots_data: dict
 
 

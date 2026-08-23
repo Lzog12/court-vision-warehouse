@@ -157,3 +157,325 @@ models:
           for example CLE or LAL.
         data_tests:
           - not_null
+
+
+  - name: dim_seasons
+    description: >
+      Season dimension containing one row per NBA season and season segment
+      combination, such as Regular Season or Playoffs.
+
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - season
+              - season_segment
+
+    columns:
+      - name: season_type_key
+        description: >
+          Surrogate key uniquely identifying a season and season segment combination.
+        data_tests:
+          - not_null
+          - unique
+
+      - name: season_id_nk
+        description: >
+          Natural (whole) season identifier returned by nba_api.
+
+      - name: season
+        description: >
+          NBA season in which the games were played.
+        data_tests:
+          - not_null
+
+      - name: season_segment
+        description: >
+          Segment of the NBA season, such as Regular Season or Playoffs.
+        data_tests:
+          - not_null
+
+
+
+  - name: dim_players
+    description: >
+      Player dimension containing one row per NBA player-team combination.
+      A player may therefore appear more than once if they have played for multiple teams.
+
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - player_id_nk
+              - team_id_nk
+
+    columns:
+      - name: player_key
+        description: >
+          Surrogate key uniquely identifying a player-team combination.
+        data_tests:
+          - not_null
+          - unique
+
+      - name: team_id_nk
+        description: >
+          Natural key identifying the NBA team associated with the player record.
+        data_tests:
+          - not_null
+
+      - name: player_id_nk
+        description: >
+          Natural key identifying the NBA player.
+        data_tests:
+          - not_null
+
+      - name: player_name
+        description: >
+          Player name returned by nba_api.
+        data_tests:
+          - not_null
+
+
+  - name: fct_shots
+    description: >
+      Shot fact table containing one row per NBA shot attempt.
+      Stores surrogate keys linking each shot to related constellation dimensions
+      along with shot-level measures and indicators.
+
+    columns:
+      - name: shot_key
+        description: >
+          Surrogate key uniquely identifying the shot attempt.
+        data_tests:
+          - not_null
+          - unique
+
+      - name: game_key
+        description: >
+          Surrogate key identifying the NBA game associated with the shot.
+        data_tests:
+          - not_null
+
+      - name: team_key
+        description: >
+          Surrogate key identifying the team that attempted the shot.
+        data_tests:
+          - not_null
+
+      - name: team_game_key
+        description: >
+          Surrogate key identifying the team-game record associated with the shot.
+        data_tests:
+          - not_null
+
+      - name: player_key
+        description: >
+          Surrogate key identifying the player-team combination associated with the shot.
+        data_tests:
+          - not_null
+
+      - name: season_type_key
+        description: >
+          Surrogate key identifying the season and season segment associated with the shot.
+        data_tests:
+          - not_null
+
+      - name: shot_id_nk
+        description: >
+          Natural key uniquely identifying the shot attempt.
+        data_tests:
+          - not_null
+          - unique
+
+      - name: is_bucket
+        description: >
+          Indicates whether the shot was made.
+          1 represents a made shot and 0 represents a missed shot.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [0, 1]
+                quote: false
+
+      - name: is_three_pointer
+        description: >
+          Indicates whether the shot was a three-point field goal attempt.
+          1 represents a three-point attempt and 0 represents a two-point attempt.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [0, 1]
+                quote: false
+
+      - name: shot_distance
+        description: >
+          Distance of the shot attempt from the basket, measured in feet.
+        data_tests:
+          - not_null
+
+      - name: loc_x
+        description: >
+          Horizontal court coordinate of the shot attempt.
+        data_tests:
+          - not_null
+
+      - name: loc_y
+        description: >
+          Vertical court coordinate of the shot attempt.
+        data_tests:
+          - not_null
+
+      - name: period_no
+        description: >
+          Game period in which the shot attempt occurred.
+        data_tests:
+          - not_null
+
+      - name: min_left
+        description: >
+          Whole minutes remaining in the period when the shot was attempted.
+        data_tests:
+          - not_null
+
+      - name: sec_left
+        description: >
+          Seconds remaining within the current minute when the shot was attempted.
+        data_tests:
+          - not_null
+
+
+
+
+  - name: fct_player_games
+    description: >
+      Player-game fact table containing one row per player per NBA game.
+      Stores player game statistics, period-level field goals made,
+      and surrogate keys linking to related constellation dimensions.
+
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - player_id_nk
+              - game_id_nk
+
+    columns:
+      - name: player_key
+        description: >
+          Surrogate key identifying the player-team combination associated
+          with the player-game record.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_players')
+                field: player_key
+
+      - name: game_key
+        description: >
+          Surrogate key identifying the NBA game.
+        data_tests:
+          - not_null
+
+      - name: season_type_key
+        description: >
+          Surrogate key identifying the season and season segment.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_seasons')
+                field: season_type_key
+
+      - name: team_key
+        description: >
+          Surrogate key identifying the team represented by the player
+          in the game.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_teams')
+                field: team_key
+
+      - name: team_game_key
+        description: >
+          Surrogate key identifying the corresponding team-game record.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_team_games')
+                field: team_game_key
+
+      - name: player_id_nk
+        description: Natural key identifying the NBA player.
+        data_tests:
+          - not_null
+
+      - name: game_id_nk
+        description: Natural key identifying the NBA game.
+        data_tests:
+          - not_null
+
+      - name: season_id_nk
+        description: Natural season identifier returned by nba_api.
+
+      - name: team_id_nk
+        description: Natural key identifying the NBA team.
+        data_tests:
+          - not_null
+
+      - name: points
+        description: Total points scored by the player in the game.
+
+      - name: min
+        description: Minutes played by the player in the game.
+
+      - name: fgm
+        description: Field goals made by the player.
+
+      - name: fga
+        description: Field goal attempts by the player.
+
+      - name: fg3m
+        description: Three-point field goals made by the player.
+
+      - name: fg3a
+        description: Three-point field goal attempts by the player.
+
+      - name: ftm
+        description: Free throws made by the player.
+
+      - name: fta
+        description: Free throw attempts by the player.
+
+      - name: fg_pct
+        description: Field goal percentage for the player in the game.
+
+      - name: plus_minus
+        description: >
+          Player plus-minus for the game, representing the team's point
+          differential while the player was on the court.
+
+      - name: q1_fgm
+        description: Field goals made by the player in the first quarter.
+
+      - name: q2_fgm
+        description: Field goals made by the player in the second quarter.
+
+      - name: q3_fgm
+        description: Field goals made by the player in the third quarter.
+
+      - name: q4_fgm
+        description: Field goals made by the player in the fourth quarter.
+
+      - name: h1_fgm
+        description: Field goals made by the player in the first half.
+
+      - name: h2_fgm
+        description: Field goals made by the player in the second half.
+
+      - name: ot_fgm
+        description: Field goals made by the player during overtime periods.
