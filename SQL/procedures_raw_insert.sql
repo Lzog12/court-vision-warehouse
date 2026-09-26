@@ -41,6 +41,7 @@ CREATE PROCEDURE raw.InsertPlayByPlay
     @game_id INT,
     @game_date DATE,
     @season VARCHAR(10),
+    @season_segment VARCHAR(20),
     @json_payload NVARCHAR(MAX),
     @batch_id UNIQUEIDENTIFIER
 AS
@@ -49,6 +50,7 @@ BEGIN
         game_id,
         game_date,
         season,
+        season_segment,
         json_payload,
         payload_hash,
         batch_id
@@ -57,6 +59,7 @@ BEGIN
         @game_id,
         @game_date,
         @season,
+        @season_segment,
         @json_payload,
         HASHBYTES('SHA2_256', @json_payload),
         @batch_id

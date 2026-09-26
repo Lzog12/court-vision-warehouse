@@ -140,6 +140,7 @@ def process_games(uq_game_ids:list[str], day: str, season: str, season_type: str
                 game_id,
                 day,
                 season,
+                season_type,
                 play_by_play,
                 batch_id
             )

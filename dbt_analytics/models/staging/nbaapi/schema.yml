@@ -145,12 +145,27 @@ models:
   - name: stg_nbaapi__play_by_play
     description: >
       Staging model for shot events from the NBA API PlayByPlayV3 endpoint.
-      Filters the raw play-by-play feed to field goal attempts only and standardises 
+      Filters the raw play-by-play feed to field goal attempts and free throws only and standardises 
       the relevant shot-level fields
 
     columns:
+      - name: season
+        description: Season in which the game was played
+        data_tests:
+          - not_null
+      
+      - name: season_segment
+        description: Season segment (regular season, playoffs) in which the game was played
+        data_tests:
+          - not_null
+
       - name: player_id_nk
         description: Id of the player that took the shot, returned by nba_api.
+        data_tests:
+          - not_null
+      
+      - name: team_id_nk
+        description: Id of the team of player that took the shot, returned by nba_api.
         data_tests:
           - not_null
 
@@ -167,12 +182,62 @@ models:
         data_tests:
         - not_null
 
+
+      - name: shot_value
+        description: Amount of points rewarded for the made shot
+      
+      - name: period_no
+        description: Period of the game at the time of the action
+
+      - name: clock
+        description: Time string in the format 'PT11M47.00S'
+      
+      - name: min_left
+        description: Minutes left when the action (shot) was taken
+      
+      - name: sec_left
+        description: Seconds (of the minute) left when the action (shot) was taken
+
       - name: home_pts
         description: Amount of points accumulated by the home team at the time of that game_event_id
 
       - name: away_pts
         description: Amount of points accumulated by the away team at the time of that game_event_id
 
+      - name: team_location
+        description: h or v value indicating the action associated player's home or away status
+
+      - name: is_fg
+        description: Indicates 1 or 0 whether the action was a field goal attempt. (can also 0 for free throw attempt)
+
+      - name: shot_value_original
+        description: Indicates potential shot value, regardless of miss
+
+      - name: shot_value_new
+        description: Same as shot_value_original but considers free throw value as well
+
+      - name: points_scored
+        description: Actual points scored from the attempt, field goal or free throw
+
+      - name: descr
+        description: >
+          Description of the shot action eg.
+          Spencer 20' Step Back Jump Shot (2 PTS)
+          MISS Landale Free Throw 2 of 2
+
+      - name: action_type
+        description: Made Shot, Missed Shot or Free Throw
+
+      - name: sub_tybe
+        description: > 
+          Indicates sub action type eg.
+          Free Throw 1 of 2
+          Step Back Jump shot
+          Driving Floating Jump Shot
+          Turnaround Hook Shot
+
+      - name: shot_value
+        description: Amount of points rewarded for the made shot
 
   - name: stg_nbaapi__player_game
     description: >

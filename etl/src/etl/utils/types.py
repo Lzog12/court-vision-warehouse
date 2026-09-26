@@ -22,6 +22,7 @@ class PlayByPlay(NamedTuple):
     game_id: str
     game_date: str
     season: str
+    season_segment: str
     pbp_data: dict
 
 

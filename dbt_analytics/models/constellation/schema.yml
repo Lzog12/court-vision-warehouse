@@ -479,3 +479,389 @@ models:
 
       - name: ot_fgm
         description: Field goals made by the player during overtime periods.
+
+
+
+
+  - name: fct_shots
+    description: >
+      Shot fact table containing one row per NBA shot attempt, including
+      field-goal attempts and free-throw attempts. Combines shot-detail and
+      play-by-play data to provide shot location, score state, shot value,
+      and contextual attempt flags.
+
+    columns:
+      - name: shot_key
+        description: >
+          Surrogate key uniquely identifying the shot attempt.
+        data_tests:
+          - not_null
+          - unique
+
+      - name: game_key
+        description: >
+          Surrogate key identifying the NBA game associated with the shot attempt.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_team_games')
+                field: game_key
+
+      - name: team_key
+        description: >
+          Surrogate key identifying the team that attempted the shot.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_teams')
+                field: team_key
+
+      - name: team_game_key
+        description: >
+          Surrogate key identifying the team-game record associated with
+          the shot attempt.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_team_games')
+                field: team_game_key
+
+      - name: player_key
+        description: >
+          Surrogate key identifying the player-team combination associated
+          with the shot attempt.
+        data_tests:
+          - not_null
+          # Add the below once fct_shots.player_key -> dim_player.player_key has been fixed
+          # - relationships:
+          #     arguments:
+          #       to: ref('dim_players')
+          #       field: player_key
+
+      - name: season_type_key
+        description: >
+          Surrogate key identifying the NBA season and season segment
+          associated with the shot attempt.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_seasons')
+                field: season_type_key
+
+      - name: shot_id_nk
+        description: >
+          Natural key uniquely identifying the shot attempt across both
+          field goals and free throws.
+        data_tests:
+          - not_null
+          - unique
+
+      - name: game_id_nk
+        description: >
+          Natural key identifying the NBA game associated with the shot attempt.
+        data_tests:
+          - not_null
+
+      - name: game_event_id_nk
+        description: >
+          Natural event identifier for the shot attempt within the NBA game.
+        data_tests:
+          - not_null
+
+      - name: is_fg
+        description: >
+          Indicates whether the shot attempt is a field-goal attempt.
+          1 represents a field goal and 0 represents a free throw.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [0, 1]
+                quote: false
+
+      - name: is_ft
+        description: >
+          Indicates whether the shot attempt is a free-throw attempt.
+          1 represents a free throw and 0 represents a field goal.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [0, 1]
+                quote: false
+
+      - name: is_bucket
+        description: >
+          Indicates whether a field-goal attempt was made.
+          1 represents a made field goal and 0 represents a missed field goal.
+          NULL for free-throw attempts because this attribute originates from
+          the shot-detail endpoint.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [0, 1]
+                quote: false
+
+      - name: is_three_pointer
+        description: >
+          Indicates whether a field-goal attempt was a three-point attempt.
+          1 represents a three-point attempt and 0 represents a two-point attempt.
+          NULL for free-throw attempts.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [0, 1]
+                quote: false
+
+      - name: shot_value
+        description: >
+          Number of points the shot attempt is worth if made.
+          Values are 1 for a free throw, 2 for a two-point field goal,
+          and 3 for a three-point field goal.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [1, 2, 3]
+                quote: false
+
+      - name: points_scored
+        description: >
+          Number of points actually scored by the shot attempt.
+          A missed attempt has a value of 0.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [0, 1, 2, 3]
+                quote: false
+
+      - name: shot_distance
+        description: >
+          Distance of the field-goal attempt from the basket, measured in feet.
+          NULL for free-throw attempts.
+
+      - name: loc_x
+        description: >
+          Horizontal court coordinate of the field-goal attempt.
+          NULL for free-throw attempts.
+
+      - name: loc_y
+        description: >
+          Vertical court coordinate of the field-goal attempt.
+          NULL for free-throw attempts.
+
+      - name: period_no
+        description: >
+          Game period in which the shot attempt occurred.
+        data_tests:
+          - not_null
+
+      - name: min_left
+        description: >
+          Whole minutes remaining in the period when the shot was attempted.
+        data_tests:
+          - not_null
+
+      - name: sec_left
+        description: >
+          Seconds remaining within the current minute when the shot was attempted.
+        data_tests:
+          - not_null
+
+      - name: home_pts
+        description: >
+          Home team's running score immediately after the shot attempt.
+          The latest score is carried forward for non-scoring attempts.
+        data_tests:
+          - not_null
+
+      - name: away_pts
+        description: >
+          Away team's running score immediately after the shot attempt.
+          The latest score is carried forward for non-scoring attempts.
+        data_tests:
+          - not_null
+
+      - name: fga_tie
+        description: >
+          Indicates whether making the attempt would tie the game while the
+          shooting player's team was trailing. Despite the current FGA naming,
+          this calculation applies to both field-goal and free-throw attempts.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [0, 1]
+                quote: false
+
+      - name: fgm_tie
+        description: >
+          Indicates whether the attempt was made and satisfied the corresponding
+          tie opportunity condition. Applies to both field goals and free throws
+          despite the current FGM naming.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [0, 1]
+                quote: false
+
+      - name: fga_lead
+        description: >
+          Indicates whether making the attempt would give the shooting player's
+          team the lead from a tied or trailing position. Applies to both field
+          goals and free throws despite the current FGA naming.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [0, 1]
+                quote: false
+
+      - name: fgm_lead
+        description: >
+          Indicates whether the attempt was made and satisfied the corresponding
+          lead opportunity condition. Applies to both field goals and free throws
+          despite the current FGM naming.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [0, 1]
+                quote: false
+
+      - name: fga_clutch
+        description: >
+          Indicates whether the attempt occurred in clutch conditions, defined
+          as the fourth quarter or overtime with less than five minutes remaining
+          and a score margin within five points from the shooting team's
+          perspective. Applies to both field goals and free throws despite the
+          current FGA naming.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [0, 1]
+                quote: false
+
+      - name: fgm_clutch
+        description: >
+          Indicates whether the attempt was made and occurred under the defined
+          clutch conditions. Applies to both field goals and free throws despite
+          the current FGM naming.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [0, 1]
+                quote: false
+
+
+  - name: fct_player_seasons
+    description: >
+      Aggregate player-season fact table containing one row per player-team-season
+      segment combination. Summarises player game performance across all included
+      games for the corresponding player, team, and season segment.
+
+    columns:
+      - name: player_key
+        description: >
+          Surrogate key identifying the player-team combination represented by the row.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_players')
+                field: player_key
+
+      - name: team_key
+        description: >
+          Surrogate key identifying the NBA team associated with the player-season record.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_teams')
+                field: team_key
+
+      - name: season_type_key
+        description: >
+          Surrogate key identifying the NBA season and season segment associated
+          with the player-season record.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_seasons')
+                field: season_type_key
+
+      - name: player_season_key
+        description: >
+          Surrogate key uniquely identifying a player-team-season segment record.
+          Generated from player_key and season_type_key.
+        data_tests:
+          - not_null
+          - unique
+
+      - name: games_played
+        description: >
+          Number of player-game records included in the player-season aggregation.
+        data_tests:
+          - not_null
+
+      - name: max_pts
+        description: >
+          Maximum points scored by the player in a single game during the
+          corresponding team-season segment.
+
+      - name: avg_pts
+        description: >
+          Average points scored per game by the player.
+
+      - name: avg_min
+        description: >
+          Average minutes played per game by the player.
+
+      - name: avg_fgm
+        description: >
+          Average field goals made per game by the player.
+
+      - name: avg_fga
+        description: >
+          Average field goal attempts per game by the player.
+
+      - name: avg_fg3m
+        description: >
+          Average three-point field goals made per game by the player.
+
+      - name: avg_fg3a
+        description: >
+          Average three-point field goal attempts per game by the player.
+
+      - name: avg_ftm
+        description: >
+          Average free throws made per game by the player.
+
+      - name: avg_fta
+        description: >
+          Average free throw attempts per game by the player.
+
+      - name: avg_fg_pct
+        description: >
+          Average of the player-level game field goal percentages across the
+          corresponding team-season segment.
+
+      - name: avg_plus_minus
+        description: >
+          Average player plus-minus per game across the corresponding
+          team-season segment.
+
+      - name: tot_plus_minus
+        description: >
+          Total player plus-minus accumulated across all included games in the
+          corresponding team-season segment.
