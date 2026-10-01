@@ -1,0 +1,17 @@
+version: 2
+
+snapshots:
+  - name: snap_players
+    description: >
+      SCD Type 2 snapshot tracking changes to each player's current team
+      from the point snapshot tracking was introduced.
+
+    relation: ref('int_current_players')
+
+    config:
+      schema: snapshot
+      unique_key: player_id_nk
+      strategy: check
+
+      check_cols:
+        - team_id_nk

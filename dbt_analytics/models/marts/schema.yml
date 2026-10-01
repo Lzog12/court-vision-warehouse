@@ -1,0 +1,736 @@
+version: 2
+
+models:
+  - name: mart_tie_lead_shots
+    description: >
+      Analysis-ready mart containing shot attempts that could either tie the
+      game or give the shooting player's team the lead. Includes both field
+      goal and free throw attempts, enriched with player, team, game and shot
+      descriptive information.
+
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - game_key
+              - game_event_id_nk
+
+    columns:
+      - name: player_key
+        description: >
+          Stable surrogate key representing the player-team combination.
+      - name: team_key
+        description: >
+          Surrogate key identifying the shooting player's team.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_teams')
+                field: team_key
+
+      - name: game_key
+        description: >
+          Surrogate key identifying the NBA game.
+        data_tests:
+          - not_null
+
+      - name: game_event_id_nk
+        description: >
+          Natural event identifier for the shot within the NBA game.
+        data_tests:
+          - not_null
+
+      - name: player_name
+        description: >
+          Name of the player who attempted the shot.
+
+      - name: player_team
+        description: >
+          Shooting player's team (abbreviation)
+
+      - name: htm
+        description: >
+          Abbreviation of the home team for the game.
+
+      - name: vtm
+        description: >
+          Abbreviation of the visiting team for the game.
+
+      - name: action_type
+        description: >
+          Descriptive shot action type. Free throw attempts are labelled
+          'Free Throw' because they do not have a corresponding record in
+          dim_shots.
+        data_tests:
+          - not_null
+
+      - name: is_fg
+        description: >
+          Indicates whether the attempt is a field goal. 1 represents a
+          field goal and 0 represents a free throw.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [0, 1]
+                quote: false
+
+      - name: is_ft
+        description: >
+          Indicates whether the attempt is a free throw. 1 represents a
+          free throw and 0 represents a field goal.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [0, 1]
+                quote: false
+
+      - name: is_bucket
+        description: >
+          Indicates whether a field goal attempt was made. NULL for free
+          throw attempts.
+
+      - name: is_three_pointer
+        description: >
+          Indicates whether a field goal attempt was a three-point attempt.
+          NULL for free throw attempts.
+
+      - name: shot_value
+        description: >
+          Number of points available from the shot attempt: 1, 2 or 3.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [1, 2, 3]
+                quote: false
+
+      - name: points_scored
+        description: >
+          Number of points scored from the attempt.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [0, 1, 2, 3]
+                quote: false
+
+      - name: shot_distance
+        description: >
+          Distance of the field goal attempt from the basket. NULL for
+          free throw attempts.
+
+      - name: loc_x
+        description: >
+          Horizontal shot-location coordinate for field goal attempts.
+          NULL for free throw attempts.
+
+      - name: loc_y
+        description: >
+          Vertical shot-location coordinate for field goal attempts.
+          NULL for free throw attempts.
+
+      - name: period_no
+        description: >
+          Game period in which the shot attempt occurred.
+        data_tests:
+          - not_null
+
+      - name: min_left
+        description: >
+          Whole minutes remaining in the period when the shot was attempted.
+        data_tests:
+          - not_null
+
+      - name: sec_left
+        description: >
+          Seconds remaining within the displayed minute when the shot was
+          attempted.
+        data_tests:
+          - not_null
+
+      - name: home_pts
+        description: >
+          Home team's score at the time represented by the shot record.
+
+      - name: away_pts
+        description: >
+          Away team's score at the time represented by the shot record.
+
+      - name: fga_tie
+        description: >
+          Indicates that making the attempt for its full shot value would
+          tie the game.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [0, 1]
+                quote: false
+
+      - name: fgm_tie
+        description: >
+          Indicates that the attempt was made and resulted from a tie-game
+          opportunity.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [0, 1]
+                quote: false
+
+      - name: fga_lead
+        description: >
+          Indicates that the attempt presented an opportunity to take the
+          lead.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [0, 1]
+                quote: false
+
+      - name: fgm_lead
+        description: >
+          Indicates that the attempt was made and resulted from a
+          lead-taking opportunity.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [0, 1]
+                quote: false
+
+      - name: fga_clutch
+        description: >
+          Indicates that the attempt met the warehouse definition of a
+          clutch attempt.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [0, 1]
+                quote: false
+
+      - name: fgm_clutch
+        description: >
+          Indicates that the attempt was made and met the warehouse
+          definition of a clutch attempt.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [0, 1]
+                quote: false
+
+
+
+  - name: mart_game_clutch_shots
+    description: >
+      Analysis-ready mart containing one row per clutch shot attempt.
+
+      Each clutch shot is enriched with descriptive shot information,
+      player information, final player-game statistics, and final team-game
+      statistics.
+
+      Player-game and team-game summary attributes are repeated across
+      multiple rows when a player takes multiple clutch shots in the same
+      game. These repeated summary fields should not be summed directly
+      across shot rows without first accounting for their higher grain.
+
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - game_key
+              - game_event_id_nk
+
+    columns:
+      - name: player_key
+        description: >
+          Stable surrogate key representing the player-team combination
+          associated with the clutch shot.
+        data_tests:
+          - not_null
+
+      - name: team_key
+        description: >
+          Surrogate key identifying the shooting player's team.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_teams')
+                field: team_key
+
+      - name: game_key
+        description: >
+          Surrogate key identifying the NBA game in which the clutch shot
+          occurred.
+        data_tests:
+          - not_null
+
+      - name: game_event_id_nk
+        description: >
+          Natural event identifier for the shot within the NBA game.
+        data_tests:
+          - not_null
+
+      - name: player_name
+        description: >
+          Name of the player who attempted the clutch shot.
+
+      - name: player_team
+        description: >
+          Abbreviation of the shooting player's team for the game.
+
+      - name: htm
+        description: >
+          Abbreviation of the home team.
+
+      - name: vtm
+        description: >
+          Abbreviation of the visiting team.
+
+      - name: team_game_points
+        description: >
+          Final number of points scored by the shooting player's team in the
+          game. This is a team-game level value and may repeat across multiple
+          clutch-shot rows from the same game.
+
+      - name: player_team_result
+        description: >
+          Final game result for the shooting player's team, typically W or L.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['W', 'L']
+
+      - name: matchup
+        description: >
+          Team matchup descriptor associated with the shooting player's
+          team-game record.
+
+      - name: game_date
+        description: >
+          Date on which the NBA game was played.
+        data_tests:
+          - not_null
+
+      - name: player_game_points
+        description: >
+          Final points scored by the player in the game. This is a player-game
+          level value and may repeat across multiple clutch-shot rows.
+
+      - name: player_game_fga
+        description: >
+          Final field goal attempts recorded by the player in the game.
+          Repeated across clutch-shot rows for the same player-game.
+
+      - name: player_game_fgm
+        description: >
+          Final field goals made by the player in the game.
+          Repeated across clutch-shot rows for the same player-game.
+
+      - name: player_game_fg3a
+        description: >
+          Final three-point field goal attempts recorded by the player in the
+          game. Repeated across clutch-shot rows for the same player-game.
+
+      - name: player_game_fg3m
+        description: >
+          Final three-point field goals made by the player in the game.
+          Repeated across clutch-shot rows for the same player-game.
+
+      - name: player_game_fta
+        description: >
+          Final free throw attempts recorded by the player in the game.
+          Repeated across clutch-shot rows for the same player-game.
+
+      - name: player_game_ftm
+        description: >
+          Final free throws made by the player in the game.
+          Repeated across clutch-shot rows for the same player-game.
+
+      - name: player_plus_minus
+        description: >
+          Final player plus-minus for the game, representing the team's point
+          differential while the player was on the court. Repeated across
+          clutch-shot rows for the same player-game.
+
+      - name: action_type
+        description: >
+          Descriptive type of shot attempt. Free throws are labelled
+          'Free Throw' when there is no corresponding dim_shots action type.
+        data_tests:
+          - not_null
+
+      - name: is_fg
+        description: >
+          Indicates whether the attempt is a field goal.
+          1 represents a field goal and 0 represents a free throw.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [0, 1]
+                quote: false
+
+      - name: is_ft
+        description: >
+          Indicates whether the attempt is a free throw.
+          1 represents a free throw and 0 represents a field goal.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [0, 1]
+                quote: false
+
+      - name: is_bucket
+        description: >
+          Indicates whether the field goal attempt was made.
+          NULL for free throw attempts.
+
+      - name: is_three_pointer
+        description: >
+          Indicates whether the field goal attempt was a three-point shot.
+          NULL for free throw attempts.
+
+      - name: shot_value
+        description: >
+          Number of points available from the shot attempt: 1, 2, or 3.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [1, 2, 3]
+                quote: false
+
+      - name: points_scored
+        description: >
+          Number of points scored from the individual shot attempt.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [0, 1, 2, 3]
+                quote: false
+
+      - name: shot_distance
+        description: >
+          Distance of the field goal attempt from the basket.
+          NULL for free throw attempts.
+
+      - name: loc_x
+        description: >
+          Horizontal shot-location coordinate for field goal attempts.
+          NULL for free throw attempts.
+
+      - name: loc_y
+        description: >
+          Vertical shot-location coordinate for field goal attempts.
+          NULL for free throw attempts.
+
+      - name: period_no
+        description: >
+          Game period in which the clutch shot was attempted.
+        data_tests:
+          - not_null
+
+      - name: min_left
+        description: >
+          Whole minutes remaining in the period when the clutch shot was
+          attempted.
+        data_tests:
+          - not_null
+
+      - name: sec_left
+        description: >
+          Seconds remaining within the displayed minute when the clutch shot
+          was attempted.
+        data_tests:
+          - not_null
+
+      - name: home_pts
+        description: >
+          Home team's score at the time represented by the clutch-shot record.
+
+      - name: away_pts
+        description: >
+          Away team's score at the time represented by the clutch-shot record.
+
+      - name: fga_tie
+        description: >
+          Indicates that making the attempt for its full shot value would have
+          tied the game.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [0, 1]
+                quote: false
+
+      - name: fgm_tie
+        description: >
+          Indicates that the shot was made and occurred on a tie-game
+          opportunity.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [0, 1]
+                quote: false
+
+      - name: fga_lead
+        description: >
+          Indicates that the attempt presented an opportunity to take the lead.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [0, 1]
+                quote: false
+
+      - name: fgm_lead
+        description: >
+          Indicates that the shot was made and occurred on a lead-taking
+          opportunity.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [0, 1]
+                quote: false
+
+      - name: fga_clutch
+        description: >
+          Indicates that the shot met the warehouse definition of a clutch
+          attempt. All rows in this mart are expected to have fga_clutch = 1.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [1]
+                quote: false
+
+      - name: fgm_clutch
+        description: >
+          Indicates that the clutch attempt was made.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [0, 1]
+                quote: false
+
+
+
+
+  - name: mart_player_games_season_context
+    description: >
+      Analysis-ready mart containing one row per player-game.
+
+      Each row includes player-game performance metrics, team and matchup context,
+      season attributes, player information, and player-season summary metrics.
+
+      Player-season summary fields such as season_high_pts, avg_pts, avg_min,
+      avg_fga, avg_fgm, avg_fg3a, avg_fg3m, avg_fta, avg_ftm, avg_fg_pct,
+      avg_plus_minus, and tot_plus_minus repeat across every game belonging to
+      the same player-season.
+
+      These repeated season-level values should not be summed across player-game
+      rows without first accounting for their higher grain.
+
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - player_key
+              - game_key
+
+    columns:
+      - name: player_key
+        description: >
+          Stable surrogate key representing the player-team combination associated
+          with the player-game record.
+        data_tests:
+          - not_null
+
+      - name: game_key
+        description: >
+          Surrogate key identifying the NBA game.
+        data_tests:
+          - not_null
+
+      - name: season_type_key
+        description: >
+          Surrogate key identifying the season and season segment associated with
+          the player-game record.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_seasons')
+                field: season_type_key
+
+      - name: player_name
+        description: >
+          Name of the player associated with the player-game record.
+
+      - name: team
+        description: >
+          Abbreviation of the player's team for the game.
+
+      - name: matchup
+        description: >
+          Team matchup descriptor for the player's team-game record.
+
+      - name: htm
+        description: >
+          Abbreviation of the home team.
+
+      - name: vtm
+        description: >
+          Abbreviation of the visiting team.
+
+      - name: game_date
+        description: >
+          Date on which the NBA game was played.
+        data_tests:
+          - not_null
+
+      - name: game_points
+        description: >
+          Points scored by the player in the game.
+
+      - name: game_min
+        description: >
+          Minutes played by the player in the game.
+
+      - name: game_fgm
+        description: >
+          Field goals made by the player in the game.
+
+      - name: game_fga
+        description: >
+          Field goal attempts by the player in the game.
+
+      - name: game_fg3m
+        description: >
+          Three-point field goals made by the player in the game.
+
+      - name: game_fg3a
+        description: >
+          Three-point field goal attempts by the player in the game.
+
+      - name: game_ftm
+        description: >
+          Free throws made by the player in the game.
+
+      - name: game_fta
+        description: >
+          Free throw attempts by the player in the game.
+
+      - name: game_fg_pct
+        description: >
+          Player field goal percentage for the game.
+
+      - name: game_plus_minus
+        description: >
+          Player plus-minus for the game, representing the team's point
+          differential while the player was on the court.
+
+      - name: season
+        description: >
+          NBA season associated with the player-game record.
+
+      - name: season_segment
+        description: >
+          Season segment associated with the player-game record, such as regular
+          season or playoffs.
+
+      - name: season_high_pts
+        description: >
+          Highest single-game points total recorded by the player for this
+          player-team-season-segment.
+
+          This is a player-season level value and repeats across each game row
+          belonging to the same player-season.
+
+      - name: avg_pts
+        description: >
+          Average points per game for the player-team-season-segment.
+
+          This season-level value repeats across each player-game row.
+
+      - name: avg_min
+        description: >
+          Average minutes played per game for the player-team-season-segment.
+
+          This season-level value repeats across each player-game row.
+
+      - name: avg_fga
+        description: >
+          Average field goal attempts per game for the
+          player-team-season-segment.
+
+          This season-level value repeats across each player-game row.
+
+      - name: avg_fgm
+        description: >
+          Average field goals made per game for the
+          player-team-season-segment.
+
+          This season-level value repeats across each player-game row.
+
+      - name: avg_fg3a
+        description: >
+          Average three-point field goal attempts per game for the
+          player-team-season-segment.
+
+          This season-level value repeats across each player-game row.
+
+      - name: avg_fg3m
+        description: >
+          Average three-point field goals made per game for the
+          player-team-season-segment.
+
+          This season-level value repeats across each player-game row.
+
+      - name: avg_fta
+        description: >
+          Average free throw attempts per game for the
+          player-team-season-segment.
+
+          This season-level value repeats across each player-game row.
+
+      - name: avg_ftm
+        description: >
+          Average free throws made per game for the
+          player-team-season-segment.
+
+          This season-level value repeats across each player-game row.
+
+      - name: avg_fg_pct
+        description: >
+          Average field goal percentage for the player-team-season-segment.
+
+          This season-level value repeats across each player-game row.
+
+      - name: avg_plus_minus
+        description: >
+          Average player plus-minus per game for the
+          player-team-season-segment.
+
+          This season-level value repeats across each player-game row.
+
+      - name: tot_plus_minus
+        description: >
+          Total player plus-minus across games in the
+          player-team-season-segment.
+
+          This season-level value repeats across each player-game row and should
+          not be summed directly across rows in this mart.
